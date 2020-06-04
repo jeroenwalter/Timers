@@ -6,16 +6,16 @@ using Mono.Unix.Native;
 namespace Walter.Timers.Linux
 {
   /// <summary>
-  /// Timer class for Linux
-  /// source: https://stackoverflow.com/questions/37814505/mono-high-resolution-timer-on-linux/37882723#37882723
+  ///   Timer class for Linux
+  ///   source: https://stackoverflow.com/questions/37814505/mono-high-resolution-timer-on-linux/37882723#37882723
   /// </summary>
   public class NanoSleepTimer : ITimer
   {
-    private readonly Stopwatch _watch = new Stopwatch(); // High resolution time
     private const uint SafeDelay = 0; // millisecond (for slightly early wakeup)
+    private readonly object _lockObject = new object();
+    private readonly Stopwatch _watch = new Stopwatch(); // High resolution time
     private Timespec _pendingNanosleepParams;
     private Timespec _threadNanosleepParams;
-    private readonly object _lockObject = new object();
     private Thread _threadTimer;
 
     public event EventHandler Elapsed;
@@ -72,24 +72,30 @@ namespace Walter.Timers.Linux
         double totalNanoseconds;
         lock (_lockObject)
         {
-          totalNanoseconds = (1e9 * _pendingNanosleepParams.tv_sec)
+          totalNanoseconds = 1e9 * _pendingNanosleepParams.tv_sec
                              + _pendingNanosleepParams.tv_nsec;
-
-
         }
 
-        return (uint)(totalNanoseconds * 1e-6); //return value in ms
+        return (uint) (totalNanoseconds * 1e-6); //return value in ms
       }
       set
       {
         lock (_lockObject)
         {
           _pendingNanosleepParams.tv_sec = value / 1000;
-          _pendingNanosleepParams.tv_nsec = (long)((value % 1000) * 1e6); //set value in ns
+          _pendingNanosleepParams.tv_nsec = (long) (value % 1000 * 1e6); //set value in ns
         }
       }
     }
-    
+
+    public void Dispose()
+    {
+      if (IsRunning)
+        StopAndWait();
+      Elapsed = null;
+      GC.SuppressFinalize(this);
+    }
+
     private void TickGenerator()
     {
       bool bNotPendingStop;
@@ -115,27 +121,18 @@ namespace Walter.Timers.Linux
         }
         else
         {
-          long iTimeLeft = (Interval - curTime); // How long to delay for 
+          var iTimeLeft = Interval - curTime; // How long to delay for 
           if (iTimeLeft >= SafeDelay)
           {
             // Task.Delay has resolution 15ms//await Task.Delay(TimeSpan.FromMilliseconds(iTimeLeft - safeDelay));
-            _threadNanosleepParams.tv_nsec = (int)((iTimeLeft - SafeDelay) * 1e6);
+            _threadNanosleepParams.tv_nsec = (int) ((iTimeLeft - SafeDelay) * 1e6);
             _threadNanosleepParams.tv_sec = 0;
             Syscall.nanosleep(ref _threadNanosleepParams, ref _threadNanosleepParams);
           }
         }
-
       }
 
       _watch.Stop();
-    }
-
-    public void Dispose()
-    {
-      if (IsRunning)
-        StopAndWait();
-      Elapsed = null;
-      GC.SuppressFinalize(this);
     }
   }
 }

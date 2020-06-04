@@ -5,17 +5,16 @@ using System.Runtime.InteropServices;
 namespace Walter.Timers.Windows
 {
   /// <summary>
-  /// This time is Windows specific and uses the multimedia timer API, e.g. timerSetEvent etc.
+  ///   This time is Windows specific and uses the multimedia timer API, e.g. timerSetEvent etc.
   /// </summary>
   public class WinMmTimer : ITimer
   {
+    // Hold the timer callback to prevent garbage collection.
+    private readonly WindowsNativeMethods.MultimediaTimerCallback _callback;
     private bool _disposed;
     private uint _interval;
     private uint _resolution;
     private uint _timerId;
-
-    // Hold the timer callback to prevent garbage collection.
-    private readonly WindowsNativeMethods.MultimediaTimerCallback _callback;
 
     public WinMmTimer()
     {
@@ -24,9 +23,16 @@ namespace Walter.Timers.Windows
       Interval = 1;
     }
 
-    ~WinMmTimer()
+    // Note minimum resolution is 0, meaning highest possible resolution.
+    public uint Resolution
     {
-      Dispose(false);
+      get => _resolution;
+      set
+      {
+        ThrowIfDisposed();
+
+        _resolution = value;
+      }
     }
 
     public uint Interval
@@ -46,18 +52,6 @@ namespace Walter.Timers.Windows
       }
     }
 
-    // Note minimum resolution is 0, meaning highest possible resolution.
-    public uint Resolution
-    {
-      get => _resolution;
-      set
-      {
-        ThrowIfDisposed();
-
-        _resolution = value;
-      }
-    }
-
     public event EventHandler Elapsed;
 
     public bool IsRunning => _timerId != 0;
@@ -73,7 +67,7 @@ namespace Walter.Timers.Windows
 
       uint userCtx = 0;
       _timerId = WindowsNativeMethods.TimeSetEvent(Interval, Resolution, _callback, ref userCtx, 1);
-      if (_timerId != 0) 
+      if (_timerId != 0)
         return;
 
       WindowsNativeMethods.TimeEndPeriod(1);
@@ -108,6 +102,17 @@ namespace Walter.Timers.Windows
     }
 
 
+    public void Dispose()
+    {
+      Dispose(true);
+    }
+
+    ~WinMmTimer()
+    {
+      Dispose(false);
+    }
+
+
     private void StopInternal()
     {
       WindowsNativeMethods.TimeKillEvent(_timerId);
@@ -119,12 +124,6 @@ namespace Walter.Timers.Windows
     private void TimerCallbackMethod(uint id, uint msg, ref uint userCtx, uint rsv1, uint rsv2)
     {
       Elapsed?.Invoke(this, EventArgs.Empty);
-    }
-
-
-    public void Dispose()
-    {
-      Dispose(true);
     }
 
     private void ThrowIfDisposed()

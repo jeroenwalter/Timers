@@ -1,19 +1,20 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Walter.Timers.Windows
 {
   /// <summary>
-  /// This time is Windows specific and uses the Timer Queue API, e.g. CreateTimerQueueTimer etc.
+  ///   This time is Windows specific and uses the Timer Queue API, e.g. CreateTimerQueueTimer etc.
   /// </summary>
   public class TimerQueueTimer : ITimer
   {
+    // Hold the timer callback to prevent garbage collection.
+    private readonly WindowsNativeMethods.TimerDelegate _callback;
     private bool _disposed;
     private uint _interval;
     private volatile IntPtr _timer;
-
-    // Hold the timer callback to prevent garbage collection.
-    private readonly WindowsNativeMethods.TimerDelegate _callback;
 
     public TimerQueueTimer()
     {
@@ -35,7 +36,7 @@ namespace Walter.Timers.Windows
         _interval = value;
       }
     }
-    
+
 
     public event EventHandler Elapsed;
 
@@ -51,7 +52,8 @@ namespace Walter.Timers.Windows
       var pParameter = IntPtr.Zero;
 
       WindowsNativeMethods.TimeBeginPeriod(1);
-      if (WindowsNativeMethods.CreateTimerQueueTimer(out var phNewTimer, IntPtr.Zero, _callback, pParameter, Interval, Interval, 0))
+      if (WindowsNativeMethods.CreateTimerQueueTimer(out var phNewTimer, IntPtr.Zero, _callback, pParameter, Interval,
+        Interval, 0))
       {
         _timer = phNewTimer;
         return;
@@ -60,7 +62,7 @@ namespace Walter.Timers.Windows
       var lastError = Marshal.GetLastWin32Error();
       WindowsNativeMethods.TimeEndPeriod(1);
 
-      throw new Exception($"CreateTimerQueueTimer error {lastError} (0x{lastError:X})");
+      throw new Win32Exception(lastError, "Failed to create the timer");
     }
 
     public void Stop()
@@ -90,6 +92,12 @@ namespace Walter.Timers.Windows
     }
 
 
+    public void Dispose()
+    {
+      Dispose(true);
+    }
+
+
     private void StopInternal()
     {
       WindowsNativeMethods.TimeEndPeriod(1);
@@ -98,13 +106,14 @@ namespace Walter.Timers.Windows
         var lastError = Marshal.GetLastWin32Error();
         if (lastError != WindowsNativeMethods.ErrorIoPending)
         {
-          //Log.Warning(Log.Here(), "DeleteTimerQueueTimer error {0} (0x{0:X}), retrying", lastError);
+          Debug.WriteLine("DeleteTimerQueueTimer error {0} (0x{0:X}), retrying", lastError);
 
           // retry and wait for any running timer callback functions to complete
-          if (!WindowsNativeMethods.DeleteTimerQueueTimer(IntPtr.Zero, _timer, (IntPtr)WindowsNativeMethods.InvalidHandleValue))
+          if (!WindowsNativeMethods.DeleteTimerQueueTimer(IntPtr.Zero, _timer,
+            (IntPtr) WindowsNativeMethods.InvalidHandleValue))
           {
             lastError = Marshal.GetLastWin32Error();
-            //Log.Error(Log.Here(), "DeleteTimerQueueTimer error {0} (0x{0:X})", lastError);
+            throw new Win32Exception(lastError, "Failed to delete the timer");
           }
         }
       }
@@ -116,12 +125,6 @@ namespace Walter.Timers.Windows
     private void TimerCallbackMethod(IntPtr parameter, bool timerOrWaitFired)
     {
       Elapsed?.Invoke(this, EventArgs.Empty);
-    }
-    
-
-    public void Dispose()
-    {
-      Dispose(true);
     }
 
     private void ThrowIfDisposed()

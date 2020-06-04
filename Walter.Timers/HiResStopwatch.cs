@@ -17,6 +17,6 @@ namespace Walter.Timers
         throw new Exception("On this system the high-resolution performance counter is not available");
     }
 
-    public long ElapsedMicroseconds => (long)(ElapsedTicks * _microSecPerTick);
+    public long ElapsedMicroseconds => (long) (ElapsedTicks * _microSecPerTick);
   }
 }

@@ -1,10 +1,9 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 
 namespace Walter.Timers
 {
   /// <summary>
-  /// Subscribe on a timer and set an AutoResetEvent each timer tick.
+  ///   Subscribe on a timer and set an AutoResetEvent each timer tick.
   /// </summary>
   public interface ITimerEvent
   {
@@ -13,7 +12,7 @@ namespace Walter.Timers
     AutoResetEvent WaitHandle { get; }
 
     /// <summary>
-    /// Wait for the next timer tick.
+    ///   Wait for the next timer tick.
     /// </summary>
     /// <remarks>Wrapper for AutoResetEvent.WaitOne</remarks>
     /// <param name="millisecondsTimeout">The number of milliseconds to wait, or Infinite (-1) to wait indefinitely.</param>
@@ -21,7 +20,7 @@ namespace Walter.Timers
     bool WaitOne(int millisecondsTimeout);
 
     /// <summary>
-    /// Wait for the next timer tick.
+    ///   Wait for the next timer tick.
     /// </summary>
     /// <remarks>Wrapper for AutoResetEvent.WaitOne</remarks>
     void WaitOne();

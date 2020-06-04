@@ -1,33 +1,33 @@
 {
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:49624",
-      "sslPort": 0
-    }
-  },
-  "profiles": {
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+    "iisSettings": {
+        "windowsAuthentication": false,
+        "anonymousAuthentication": true,
+        "iisExpress": {
+            "applicationUrl": "http://localhost:49624",
+            "sslPort": 0
+        }
     },
-    "RemoteDebugWebApplication": {
-      "commandName": "Executable",
-      "executablePath": "$(ProjectDir)\\publish.bat",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "remoteDebugEnabled": false,
-      "applicationUrl": "http://localhost:5000"
-    },
-    "Demo": {
-      "commandName": "Project",
-      "remoteDebugEnabled": false
+    "profiles": {
+        "IIS Express": {
+            "commandName": "IISExpress",
+            "launchBrowser": true,
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        "RemoteDebugWebApplication": {
+            "commandName": "Executable",
+            "executablePath": "$(ProjectDir)\\publish.bat",
+            "launchBrowser": true,
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "remoteDebugEnabled": false,
+            "applicationUrl": "http://localhost:5000"
+        },
+        "Demo": {
+            "commandName": "Project",
+            "remoteDebugEnabled": false
+        }
     }
-  }
 }

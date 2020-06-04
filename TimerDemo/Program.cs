@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Walter.Timers;
 using Walter.Timers.Other;
 
 namespace TimerDemo
 {
-  class Program
+  internal class Program
   {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
       var program = new Program();
 
@@ -21,7 +21,7 @@ namespace TimerDemo
 
       Console.WriteLine("Finished...");
 
-      if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) 
+      if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         return;
 
       Console.WriteLine("Press Enter to quit.");
@@ -39,7 +39,7 @@ namespace TimerDemo
       timer.Start();
 
       // Do something whilst events happening, for demo sleep 2000ms (2sec)
-      System.Threading.Thread.Sleep(2000);
+      Thread.Sleep(2000);
 
       Console.WriteLine("Stopping...");
 
@@ -49,16 +49,12 @@ namespace TimerDemo
     private static void OnTimerTick(HiResStopwatch stopwatch, EventArgs eventArgs)
     {
       if (eventArgs is SpinWaitTimerEventArgs timerEventArgs)
-      {
         Console.WriteLine(
           $"Count = {timerEventArgs.TimerCount:#,0}  Timer = {timerEventArgs.ElapsedMicroseconds:#,0} µs, " +
           $"LateBy = {timerEventArgs.TimerLateBy:#,0} µs, ExecutionTime = {timerEventArgs.CallbackFunctionExecutionTime:#,0} µs");
-      }
       else
-      {
         Console.WriteLine($"Count = {0:#,0}  Timer = {stopwatch.ElapsedMicroseconds:#,0} µs, " +
                           $"LateBy = {0:#,0} µs, ExecutionTime = {0:#,0} µs");
-      }
     }
 
     private void TimerEventTest(ITimer timer)
@@ -66,7 +62,7 @@ namespace TimerDemo
       Console.WriteLine($"TimerEventTest {timer.GetType().Name}");
       timer.Interval = 5;
       timer.Start();
-      
+
       Task.Run(() =>
       {
         var stopwatch = new HiResStopwatch();
@@ -83,9 +79,9 @@ namespace TimerDemo
         timerEvent.Dispose();
         stopwatch.Stop();
       }).Wait();
-      
+
       Console.WriteLine("Stopping...");
-      
+
       timer.Dispose();
     }
   }

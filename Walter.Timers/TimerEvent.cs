@@ -1,19 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace Walter.Timers
 {
   /// <summary>
-  /// TimerEvent will subscribe on a timer and sets an AutoResetEvent each timer tick.
+  ///   TimerEvent will subscribe on a timer and sets an AutoResetEvent each timer tick.
   /// </summary>
   public class TimerEvent : ITimerEvent, IDisposable
   {
-    public ITimer Timer { get; }
-
-    public AutoResetEvent WaitHandle { get; }
-
     public TimerEvent(ITimer timer)
     {
       Timer = timer;
@@ -21,11 +15,16 @@ namespace Walter.Timers
       Timer.Elapsed += TimerOnElapsed;
     }
 
-    private void TimerOnElapsed(object sender, EventArgs e)
+    public void Dispose()
     {
-      WaitHandle.Set();
+      Timer.Elapsed -= TimerOnElapsed;
+      WaitHandle?.Dispose();
     }
-    
+
+    public ITimer Timer { get; }
+
+    public AutoResetEvent WaitHandle { get; }
+
     public void WaitOne()
     {
       if (!Timer.IsRunning)
@@ -42,10 +41,9 @@ namespace Walter.Timers
       return WaitHandle.WaitOne(millisecondsTimeout);
     }
 
-    public void Dispose()
+    private void TimerOnElapsed(object sender, EventArgs e)
     {
-      Timer.Elapsed -= TimerOnElapsed;
-      WaitHandle?.Dispose();
+      WaitHandle.Set();
     }
   }
 }

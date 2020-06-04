@@ -21,12 +21,18 @@ namespace Walter.Timers.Other
       Interval = 1;
     }
 
+    public long IgnoreEventIfLateBy
+    {
+      get => Interlocked.Read(ref _ignoreEventIfLateBy);
+      set => Interlocked.Exchange(ref _ignoreEventIfLateBy, value <= 0 ? long.MaxValue : value);
+    }
+
 
     public event EventHandler Elapsed;
-    
+
     public uint Interval
     {
-      get => (uint)Interlocked.Read(ref _timerIntervalInMicroSec) / 1000;
+      get => (uint) Interlocked.Read(ref _timerIntervalInMicroSec) / 1000;
       set
       {
         ThrowIfDisposed();
@@ -37,12 +43,6 @@ namespace Walter.Timers.Other
         long intervalInMicroSec = value * 1000;
         Interlocked.Exchange(ref _timerIntervalInMicroSec, intervalInMicroSec);
       }
-    }
-
-    public long IgnoreEventIfLateBy
-    {
-      get => Interlocked.Read(ref _ignoreEventIfLateBy);
-      set => Interlocked.Exchange(ref _ignoreEventIfLateBy, value <= 0 ? long.MaxValue : value);
     }
 
 
@@ -57,7 +57,8 @@ namespace Walter.Timers.Other
 
       _stopTimer = false;
 
-      _threadTimer = new Thread(() => NotificationTimer(ref _timerIntervalInMicroSec, ref _ignoreEventIfLateBy, ref _stopTimer))
+      _threadTimer = new Thread(() =>
+        NotificationTimer(ref _timerIntervalInMicroSec, ref _ignoreEventIfLateBy, ref _stopTimer))
       {
         Priority = ThreadPriority.Highest,
         Name = "SpinWaitTimer",
@@ -100,6 +101,11 @@ namespace Walter.Timers.Other
         _threadTimer.Abort();
     }
 
+    public void Dispose()
+    {
+      Dispose(true);
+    }
+
     private void NotificationTimer(ref long timerIntervalInMicroSec,
       ref long ignoreEventIfLateBy,
       ref bool stopTimer)
@@ -140,11 +146,6 @@ namespace Walter.Timers.Other
       }
 
       microStopwatch.Stop();
-    }
-
-    public void Dispose()
-    {
-      Dispose(true);
     }
 
     private void ThrowIfDisposed()
