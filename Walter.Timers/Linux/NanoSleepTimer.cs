@@ -5,6 +5,10 @@ using Mono.Unix.Native;
 
 namespace Walter.Timers.Linux
 {
+  /// <summary>
+  /// Timer class for Linux
+  /// source: https://stackoverflow.com/questions/37814505/mono-high-resolution-timer-on-linux/37882723#37882723
+  /// </summary>
   public class NanoSleepTimer : ITimer
   {
     private readonly Stopwatch _watch = new Stopwatch(); // High resolution time
